@@ -6,11 +6,28 @@
     	<header>
     		<h4 class="entry-title">爱生活，爱读书，爱编程</h4>
     	</header>
-		<div style="text-align:center">
-	 <div  style="text-align:center; " ><script type="text/javascript" src="http://www.douban.com/service/badge/1648248/?show=collection&amp;n=6&amp;columns=6&amp;picsize=medium&amp;hidelogo=yes&amp;hideself=yes&amp;cat=movie" ></script></div>
-	 <div  style="text-align:center; " ><script type="text/javascript" src="http://www.douban.com/service/badge/1648248/?show=collection&amp;n=5&amp;columns=5&amp;picsize=medium&amp;hidelogo=yes&amp;hideself=yes&amp;cat=music" ></script></div>
-	 <div  style="text-align:center; " ><script type="text/javascript" src="http://www.douban.com/service/badge/1648248/?show=collection&amp;n=6&amp;columns=6&amp;picsize=medium&amp;hidelogo=yes&amp;hideself=yes&amp;cat=book" ></script></div>
-</div>
+    <div style="text-align:center">
+		<div  style="text-align:center; " ><script type="text/javascript" src="http://www.douban.com/service/badge/1648248/?show=collection&amp;n=6&amp;columns=6&amp;picsize=medium&amp;hidelogo=yes&amp;hideself=yes&amp;cat=movie" ></script></div>
+		<div  style="text-align:center; " ><script type="text/javascript" src="http://www.douban.com/service/badge/1648248/?show=collection&amp;n=5&amp;columns=5&amp;picsize=medium&amp;hidelogo=yes&amp;hideself=yes&amp;cat=music" ></script></div>
+		<div  style="text-align:center; " ><script type="text/javascript" src="http://www.douban.com/service/badge/1648248/?show=collection&amp;n=6&amp;columns=6&amp;picsize=medium&amp;hidelogo=yes&amp;hideself=yes&amp;cat=book" ></script></div>
 	</div>
-     </article>
+	</article>	
+	{% if UYAN %}
+	<section>
+	<h1>Comments</h1>
+	<!-- UY BEGIN -->
+	<div id="uyan_frame"></div>
+	<script type="text/javascript" id="UYScript" src="http://v1.uyan.cc/js/iframe.js?UYUserId=1736030" async=""></script>
+	<!-- UY END -->
+	</section>
+	{% endif %}
+
+	{% if DISQUS_SITENAME %}
+	<section>
+	<h1>Comments</h1>
+	<div id="disqus_thread" aria-live="polite">{% include '_includes/disqus_thread.html' %}</div>
+	</section>
+	{% endif %}
+
+</div>
 {% endblock %}
