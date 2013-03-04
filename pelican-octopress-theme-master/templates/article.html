@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title|striptags }}{% endblock %}
+{% block content %}
+<div>
+	<article class="hentry" role="article">
+	{% include '_includes/article.html' %}
+	<footer>
+	{% include '_includes/article_infos.html' %}
+	</footer>
+	
+	<!--这是一段注释。注释掉下一篇文章，暂时还没实现这个功能。-->
+	<!--
+	<p class="meta">
+
+	{% if articles %}
+	<a class="basic-alignment left" href="/2012/09/new-wacom/" title="Previous Post: 入手Wacom Bamboo CTL470">&laquo;{{ article.title }}</a>
+	{% endif %}
+
+	<a class="basic-alignment right" href="/2013/01/leave-google/" title="Next Post: Richard Stallman仍然是对的">Richard Stallman仍然是对的 &raquo;</a>
+
+	</p>
+	-->
+
+	</article>
+	{% if UYAN %}
+	<section>
+	<h1>Comments</h1>
+	<!-- UY BEGIN -->
+	<div id="uyan_frame"></div>
+	<script type="text/javascript" id="UYScript" src="http://v1.uyan.cc/js/iframe.js?UYUserId=1736030" async=""></script>
+	<!-- UY END -->
+	</section>
+	{% endif %}
+
+	{% if DISQUS_SITENAME %}
+	<section>
+	<h1>Comments</h1>
+	<div id="disqus_thread" aria-live="polite">{% include '_includes/disqus_thread.html' %}</div>
+	</section>
+	{% endif %}
+</div>
+{% include '_includes/sidebar.html' %}
+{% endblock %}
