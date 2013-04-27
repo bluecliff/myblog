@@ -60,10 +60,10 @@ radius的数据包是封装在UDP数据包的数据部分，数据包的格式�
 
 coovachilli的1.1.1.1版本中radius的实现文件：
 
-radius.h
-radius_chillispot.h
-radius_wispr.h
-radius.c
++ radius.h
++ radius_chillispot.h
++ radius_wispr.h
++ radius.c
 
 基本数据类型定义在limits.h文件中。
 
@@ -74,29 +74,28 @@ radius.h
 
 ## 基本的数据结构包括：
 
-struct radius_packet_t	radius包定义，这个struct定义了radius包的基本结构。
-struct radius_queue_tradius	包队列元素, 这个struct定义radius包队列的元素。
-struct radius_t	Radius 实例，这个Struct定义radius的实例结构。每一个radius连接都是这样的一个实例。
-struct radiusm_t	radius实例队列数据结构。
-struct radius_attr_t	radius属性AVP结构的数据结构定义。
-radius_vsattr_t	radius自定义属性AVP结构
-int radius_new	创建新radius实例
-int radius_init_q	初始化radius实例队列
-int radius_free	释放一个radius实例
-void radius_set	设置radius的实例
-int radius_set_cb_auth_conf	收到access request的response后的回调函数
-int radius_set_cb_acct_conf	收到account request的response后的回调函数
-int radius_req	发出请求
-int radius_resp	发送相应
-int radius_decaps	处理一个收到的radius包
-int radius_addattr	给一个包增加属性
-int radius_getnextattr	从一个包中取出一个属性
-int radius_pwdecode	解码密码
-int radius_pwencode	编码密码
-int radius_keydecode	解码一个mppe密码
-int radius_keyencode	编码一个mppe密码
-int radius_timeout	处理超时的包的重发
-int radius_timeleft	返回剩余的等待时间，准备重发
-int radius_authresp_authenticator	生成应答包的认证字
-int chilliauth_radius	开始认证一个radius实例
-
++ struct radius_packet_t	radius包定义，这个struct定义了radius包的基本结构。
++ struct radius_queue_tradius	包队列元素, 这个struct定义radius包队列的元素。
++ struct radius_t	Radius 实例，这个Struct定义radius的实例结构。每一个radius连接都是这样的一个实例。
++ struct radiusm_t	radius实例队列数据结构。
++ struct radius_attr_t	radius属性AVP结构的数据结构定义。
++ radius_vsattr_t	radius自定义属性AVP结构
++ int radius_new	创建新radius实例
++ int radius_init_q	初始化radius实例队列
++ int radius_free	释放一个radius实例
++ void radius_set	设置radius的实例
++ int radius_set_cb_auth_conf	收到access request的response后的回调函数
++ int radius_set_cb_acct_conf	收到account request的response后的回调函数
++ int radius_req	发出请求
++ int radius_resp	发送相应
++ int radius_decaps	处理一个收到的radius包
++ int radius_addattr	给一个包增加属性
++ int radius_getnextattr	从一个包中取出一个属性
++ int radius_pwdecode	解码密码
++ int radius_pwencode	编码密码
++ int radius_keydecode	解码一个mppe密码
++ int radius_keyencode	编码一个mppe密码
++ int radius_timeout	处理超时的包的重发
++ int radius_timeleft	返回剩余的等待时间，准备重发
++ int radius_authresp_authenticator	生成应答包的认证字
++ int chilliauth_radius	开始认证一个radius实例
