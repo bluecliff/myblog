@@ -30,17 +30,17 @@ Linux系统启动时会自动启动相应的守护进程，使系统正常工作
 1. 在后台运行。 
 为避免挂起控制终端，需将Daemon放入后台执行。方法是在进程中调用fork，然后使父进程终止，让Daemon在子进程中后台执行。
 
-:::c 
-if(pid=fork()>0) 
-  exit(0);//结束父进程，子进程继续 
+        :::c 
+        if(pid=fork()>0) 
+          exit(0);//结束父进程，子进程继续 
 
 2. 脱离控制终端，登录会话和进程组 
 
 进程属于一个进程组，进程组号（GID）就是进程组长的进程号（PID）。登录会话可以包含多个进程组。这些进程组共享一个控制终端。这个控制终端通常是创建进程的登录终端。
 控制终端，登录会话和进程组通常是从父进程继承下来的。我们的目的就是要摆脱它们，使之不受它们的影响。方法是在第1点的基础上，调用setsid()使进程成为会话组长： 
 
-:::c
-setsid(); 
+        :::c
+        setsid(); 
 
 说明：当进程是会话组长时setsid()调用失败。但第一点已经保证进程不是会话组长。setsid()调用成功后，进程成为新的会话组长和新的进程组长，并与原来的登录会话和进程组脱离。由于会话过程对控制终端的独占性，进程同时与控制终端脱离。 
 
@@ -48,16 +48,16 @@ setsid();
 
 现在，进程已经成为无终端的会话组长。但它可以重新申请打开一个控制终端。可以通过使进程不再成为会话组长来禁止进程重新打开控制终端： 
 
-:::c
-if(pid=fork()>0) 
-  exit(0);//结束第一子进程，第二子进程继续（第二子进程不再是会话组长） 
+        :::c
+        if(pid=fork()>0) 
+          exit(0);//结束第一子进程，第二子进程继续（第二子进程不再是会话组长） 
 
 4. 关闭打开的文件描述符 
 
 进程从创建它的父进程那里继承了打开的文件描述符。如不关闭，将会浪费系统资源，造成进程所在的文件系统无法卸下以及引起无法预料的错误。按如下方法关闭它们： 
 
-:::c
-for(i=0;i<NOFILE; close(i); 
+        :::c
+        for(i=0;i<NOFILE; close(i); 
 
 5. 改变当前工作目录 
 
@@ -71,8 +71,8 @@ for(i=0;i<NOFILE; close(i);
 
 处理SIGCHLD信号并不是必须的。但对于某些进程，特别是服务器进程往往在请求到来时生成子进程处理请求。如果父进程不等待子进程结束，子进程将成为僵尸进程（zombie）从而占用系统资源。如果父进程等待子进程结束，将增加父进程的负担，影响服务器进程的并发性能。在Linux下可以简单地将SIGCHLD信号的操作设为SIG_IGN。 
 
-:::c
-signal(SIGCHLD,SIG_IGN); 
+        :::c
+        signal(SIGCHLD,SIG_IGN); 
 
 这样，内核在子进程结束时不会产生僵尸进程。这一点与BSD4不同，BSD4下必须显式等待子进程结束才能释放僵尸进程。 
 
@@ -84,62 +84,62 @@ signal(SIGCHLD,SIG_IGN);
 
 init.c
 
-:::c
-#include <unistd.h>
-#include <signal.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-void init_daemon(void)
-{
-    int pid;
-    int i;
-    if((pid=fork())>0)
-        exit(0);//是父进程，结束父进程
-    else if(pid< 0)
-        exit(1);//fork失败，退出
-    //是第一子进程，后台继续执行
-    setsid();//第一子进程成为新的会话组长和进程组长
-    //并与控制终端分离
-    if(pid=fork())
-        exit(0);//是第一子进程，结束第一子进程
-    else if(pid< 0)
-        exit(1);//fork失败，退出
-    //是第二子进程，继续
-    //第二子进程不再是会话组长
+        :::c
+        #include <unistd.h>
+        #include <signal.h>
+        #include <sys/param.h>
+        #include <sys/types.h>
+        #include <sys/stat.h>
+        void init_daemon(void)
+        {
+            int pid;
+            int i;
+            if((pid=fork())>0)
+                exit(0);//是父进程，结束父进程
+            else if(pid< 0)
+                exit(1);//fork失败，退出
+            //是第一子进程，后台继续执行
+            setsid();//第一子进程成为新的会话组长和进程组长
+            //并与控制终端分离
+            if(pid=fork())
+                exit(0);//是第一子进程，结束第一子进程
+            else if(pid< 0)
+                exit(1);//fork失败，退出
+            //是第二子进程，继续
+            //第二子进程不再是会话组长
 
-    for(i=0;i< NOFILE;++i)//关闭打开的文件描述符
-        close(i);
-    chdir("/tmp");//改变工作目录到/tmp
-    umask(0);//重设文件创建掩模
-    return;
-}
+            for(i=0;i< NOFILE;++i)//关闭打开的文件描述符
+                close(i);
+            chdir("/tmp");//改变工作目录到/tmp
+            umask(0);//重设文件创建掩模
+            return;
+        }
 
 test.c
 
-:::c
-#include <stdio.h>
-#include <time.h>
+        :::c
+        #include <stdio.h>
+        #include <time.h>
 
-void init_daemon(void);//守护进程初始化函数
+        void init_daemon(void);//守护进程初始化函数
 
-main()
-{
-    FILE *fp;
-    time_t t;
-    init_daemon();//初始化为Daemon
-
-    while(1)//每隔一分钟向test.log报告运行状态
-    {
-        sleep(30);//睡眠一分钟
-        if((fp=fopen("test.log","a")) >=0)
+        main()
         {
-            t=time(0);
-            fprintf(fp,"Im here at %s/n",asctime(localtime(&t)) );
-            fclose(fp);
+            FILE *fp;
+            time_t t;
+            init_daemon();//初始化为Daemon
+
+            while(1)//每隔一分钟向test.log报告运行状态
+            {
+                sleep(30);//睡眠一分钟
+                if((fp=fopen("test.log","a")) >=0)
+                {
+                    t=time(0);
+                    fprintf(fp,"Im here at %s/n",asctime(localtime(&t)) );
+                    fclose(fp);
+                }
+            }
         }
-    }
-}
 
  
 编译：gcc -g -o test init.c test.c 
@@ -150,9 +150,9 @@ main()
 
 前文中给出了一个daemon守护进程的实现函数init_daemon()，实际上Linux系统提供了一个函数daemon可以直接完成把进程转为守护进程。函数原型如下：
 
-:::c
-#include <unistd.h>
-int daemon(int nochdir, int noclose);
+        :::c
+        #include <unistd.h>
+        int daemon(int nochdir, int noclose);
 
 1． daemon()函数主要用于希望脱离控制台，以守护进程形式在后台运行的程序。
 2． 当nochdir为0时，daemon将更改进程的根目录为root(“/”)。
@@ -160,8 +160,8 @@ int daemon(int nochdir, int noclose);
 
 使用时，直接把业务逻辑程序放在daemon函数后面即可。如下所示：
 
-int main()
-{
-    daemon(1, 1)； //参数根据需求定
-    /*  在这里添加你需要在后台做的工作代码  */
-}
+        int main()
+        {
+            daemon(1, 1)； //参数根据需求定
+            /*  在这里添加你需要在后台做的工作代码  */
+        }
