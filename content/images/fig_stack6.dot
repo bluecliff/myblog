@@ -1,0 +1,33 @@
+digraph G{
+        rankdir=LR;
+        node[shape=record,width=.8,height=.1];
+        //node0 [label ="<fb>|<f0>|<f1> var: string|<f1_1> arg2=*(string)=\'h\'| <f1_2> arg1=\"%c\">|<f2> 返回地址 |<f3> old ebp|<f4> h|<f5>e|<f6>l|<f7>l|...|<f8>d|<f9>\\0|"];
+        node0 [label ="<fb>|<f0>|<f1> var: string|<f1_1> arg2=*(string)=\'h\'|<f1_2> arg1=\"%s\" |<f2> 返回地址 |<f3> prinf函数局部变量|...|<f4> prinf函数局部变量|"];
+        
+        stack_main [shape=plaintext,label="main函数栈"];
+        stack_fp [shape=plaintext,label="printf函数栈"];
+        ebp [shape=plaintext,label="ebp"];
+        esp [shape=plaintext,label="esp"];
+        //eax [shape=plaintext,label="eax"];
+
+        //node0:f4:ne->node0:f1[dir=back];
+        esp->node0:f4:sw;
+        ebp->node0:f3:nw;
+        //eax->node0:f4:nw;
+        stack_main->node0:fb;
+        stack_main->node0:f4;
+        node0:f4->stack_fp[dir=back];
+        node0:f3->stack_fp[dir=back];
+        
+        //node0:f3:e->node0:fb:e;
+        //node0:f1-> null[shape=plaintext];
+
+        addr1 [shape=plaintext,label="0xCFFFFFFB"];
+        addr2 [shape=plaintext,label="0xCFFFFFEF"];
+
+        node0:f1:ne->addr1[dir=back];
+        node0:f2:se->addr2[dir=back];
+
+        edge [label="0xCFFFFFF0"];
+        node0:f1:e->node0:f2:e;
+}
