@@ -1,0 +1,87 @@
+Date: 2013-6-10 15:22
+tags: netgear
+title: NETGEAR WNR2000V3和第三方开源固件基本情况
+md_linebreaks: two
+
+
+WNR2000v3基本参数
+==================
+
+这是一款家用型的小型无线路由器，天线内置，且内置交换机。基本参数如下表所示：
+
+  .. list-table:: NETGEAR WNR2000V3路由器的基本信息
+    :widths: 20 6 6 20 8 15 15 10
+    :header-rows: 1
+
+    * - CPU/主频
+      - RAM
+      - ROM
+      - 无线NIC
+      - wlan标准
+      - wan口和lan口
+      - 通信口
+      - 电源标准
+    * - Atheros AR7240/400MHZ
+      - 32M
+      - 4M
+      - Atheros AR9287 2x2 MIMO
+      - b/g/n
+      - 4 LAN 1 WAN
+      - 1串口，1Jtag口
+      - 12V 1A
+
+上表中的串口和Jtag口都需要手工焊接到电路板上才能使用。
+该路由器打开电源键，同时按住复位键20秒左右，电源灯绿色闪烁时，即进入TFTP模式，此时可以刷入openWRT等固件的image。具体方法下文介绍。
+
+openWRT基本情况
+=================
+
+openWRT的技术比较成熟，不仅仅是一个简单的固件，官方的说法是一个“完全可写的文件系统”。实际上在把编译好的openWRT固件刷到AP中后，可以通过客户端SSH连接登录到AP，并且通过openWRT的包管理安装所需的软件。甚至可以把该系统当做一个linux服务器来用。
+
+openWRT分为多个版本，有早期的Buildroot-NG and Kamikaze版本(这两个版本后来合并为一个，即Kamikaze，
+WNR2000V3官方安装的即Kamikaze7.0的改造版本。目前这两个个版本已经停止维护和更新)，之后发
+布了全新的whiterussian版本(该版本到0.9停止更新，目前可以获取，但已不再维护)。
+
+目前常用的版本是backfire版本和Attitude Adjustment版本，二者都是trunk版本的不同分支，且都是处于维护
+中的稳定版本。backfire目前已发布了两个版本，2010年发布的10.03和2011年发布的更新版本10.03.1。Attitude
+Adjustment目前发布了一个版本，2013年4月的12.09，预计会在2013年发布12.09.1更新版。
+
+openWRT项目的主干开发版本是所谓的trunk版本，这是个不稳定的持续处于开发中的版本。
+
+- 各个版本的固件及工具链下载地址：http://downloads.openwrt.org/
+- 最新版本的源代码下载地址：https://dev.openwrt.org/wiki/GetSource
+
+openWRT获取途径
+================
+
+有四种途径可获得OpenWRT固件的映像文件:
+
+1. 从下载区域下载一个预编译好的镜像. 推荐
+#. 使用镜像生成器生成一个属于你自己的OpenWrt固件镜像。(Generate in terms of compose, arrange, assort, lump together)
+#. 使用SDK进行交叉编译包。
+#. 使用OpenWrt Buildroot从零起步完成一切。这个过程包括:
+  (1) 下载源代码
+  (#) 编译工具链(SDK)
+  (#) 交叉编译内核+包
+  (#) 生成一个OpenWrt固件镜像文件
+
+openWRT现状分析
+=================
+
+openWRT相对于tomato和DDwrt，社区要活跃的多，开发进度，支持的设备上都更有优势。目前openWRT的有多个可用版本可用，工具链和第三方库也比较全面。如果需要自己定制的功能，openWRT作为开发平台还是比较合适的。
+
+在与WNR2000v3相匹配方面，目前openWRT只支持trunk版本，最新的稳定版本并不支持。但在实际刷板子的过程中，因为netgare对固件的验证，第三方的固件很难直接双上去，大豆需要进行改造bootloader。
+
+
+DDWRT简介
+==========
+
+DDWRT同openWRT一样也是GPL协议开源的第三方AP固件，支持设备也比较多，更新速度快，且能支持最新的路由。
+
+目前DDWRT的最新稳定版本是24SP2，但同时几乎每个月都有非稳定的更新版本的出现。。详情可查看http://www.dd-wrt.com/wiki/index.php/Main_Page。
+
+DDWRT的优点是预编译的可用的版本很多，而且支持的设备广泛。但缺点也很明显，首先是只有一个人在开发维护，是否能长期支持有疑问，这一点不同于openWRT的团队开发模式。其次是版本迭代快，资料很少，有的最新版本并不能顺利运行。
+
+DDWRT的预编译版的镜像以源码都可以在官方网站下载得到。但如前所述，最新的不一定能用，需要先看论坛，确定支持后再刷比较安全。
+
+DDWRT的编译比openWRT要复杂，因为DDWRT并没有如openWRT一样的自动化配置工具，往往配置出错导致编译出错。具体编译方法后文会介绍。

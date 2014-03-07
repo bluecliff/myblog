@@ -1,0 +1,89 @@
+Date: 2013-7-18 11:22
+tags: wifi,openWRT
+title: wifi无线指标提取
+md_linebreaks: two
+
+两个指标
+=========
+
+通过装有openwrt的wifi设备可以获取到的主要指标就是周围处于打开状态的wifi设备的MAC地址和这些设备的wifi信号强度。
+原理是通过抓取monitor模式的无线网卡的MAC层的管理包。即可分辨出这些设备的MAC和信号强度。具体的方法前面的文档中有叙述。
+
+此外，同时也可获取到已连接到当前AP的wifi设备的MAC地址和信号强度，以及周围的AP设备的信号强度和SSID信息。
+
+本文档主要叙述wifi无线指标获取的程序的设计和运行方法。
+
+***注意：本方法只适用ath9k驱动的网卡，其他的网卡不能用该方法得到相应指标***
+
+使用到的程序
+=============
+
+使用到的程序包括iw,iwcap,iwinfo,getmac.sh,getclient.sh等五个程序。所有的这五个程序都是运行在Openwrt平台上的，
+前三个程序是C程序，后两个是简单的shell script程序。前两个是系统支持的工具，后三个是我们自主完成的程序。
+
+- iw iw是openwrt开发团队开发的一个开源的工具，辅助完成openWRT系统的网卡的管理。我们的程序主要使用该工具创建
+  一个monitor模式的网卡，以完成对802.11管理数据包的抓取。
+
+- iwinfo也是openwrt的一个自带的小工具，主要用于方便的获取指定网卡的信息。我们的程序中主要用该工具实现获取 
+  已连到当前AP的wifi设备列表及设备的MAC和信号强度。
+
+- iwcap 本是openwrt团队用来调试wifi功能的一个抓包工具，可以抓取802.11的所有数据包。我们删除了无用的pcap抓
+  包写包代码，改成了一个抓取特定的prorequest数据包，并且截取这个包中的源MAC地址信息和信号强度数据。经过简单
+  的数据格式的处理后用TCP协议发送到指定的服务器的程序。改程序现在既是一个抓包，分析包的程序，也是一个TCP客户端。
+
+- getmac.sh 这是一个获取本地MAC地址的脚本，iwcap程序会调用这个脚本以获取本AP的MAC地址。
+
+- getclient.sh 这个程序会调用iwinfo以获取连接到本AP的wifi设备列表。iwcap程序会调用这个程序。
+
+程序安装方法
+=============
+
+1. 使用SSH登录到openwrt，执行opkg update更新可用的软件列表。
+2. 执行下面的命令安装iw和iwinfo。也可能iw工具已经安装，此时无需再安装iwinfo。
+
+```bash
+ 
+  opkg install iw iwinfo 
+```
+
+3. 把编译好的iwcap程序，如iwcap_1_ar71xx.ipk用scp发送到openwrt系统。执行下面的命令安装iwcap
+
+```bash
+ 
+  opkg install iwcap_1_ar71xx.ipk
+```
+
+**注意 不能简单的执行opkg install iwcap，这可能造成安装了官方版本的iwcap程序。**
+
+4. 把getmac.sh,getclient.sh两个程序用scp发送到openwrt系统的/bin目录下，并且修改权限为可执行。
+
+经过上面几步即完成了程序的安装工作。
+
+执行程序
+=========
+
+完成安装后，即可启动服务器端程序。然后启动openwrt端的客户端程序iwcap。启动前首先需要使用iw工具创建一个monitor
+模式的虚拟无线网卡，具体命令如下所示：
+
+```bash
+  iw phy phy0 interface add mon0 type monitor
+  ifconig mon0 up
+```
+
+其中mon0为新建立的无线网卡的名字。
+
+完成网卡创建后即可启动iwcap客户端程序了：
+
+```bash
+
+  iwcap -i mon0 -a 192.168.1.124 -p 8000 -t 60
+```
+
+上述启动命令中的参数-i指定了抓取数据包的网卡，-a指定服务器的IP地址，-p指定服务器监听的端口号，-t参数指定已连接
+到本AP的wifi client列表信息的时间间隔，单位为秒。
+
+**注意 这几个参数都是必须的，不能省略。**
+
+完成后，程序正常运行时即可实时发送当前周围发现的wifi设备，每隔一段时间发送所有当前已连接的设备的列表。服务端接收到的数据如图所示：
+
+![](/images/iwcap.png)

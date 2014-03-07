@@ -1,0 +1,89 @@
+Date: 2013-6-27 16:22
+tags: openWRT,wifi
+title: 开源AP系统应用方案
+md_linebreaks: two
+
+系统简介
+=========
+
+系统的基本设想是利用AP检测周围的打开wifi的wifi设备（主要是智能手机）的信号，从而得到这些设备的MAC地址和wifi
+信号强度等信息。统计这些信息，并根据信号强度可以计算出粗略的用户位置。这些信息对于线下商场等商务场合统计用户
+信息，挖掘潜力用户是很有价值的。
+
+类似系统
+=========
+本系统的类似方案目前找到的有两个，一个是EUCLID的解决方案。地址：http://euclidanalytics.com/。
+该系统原理也是利用一个AP搜集周围的用户信息和位置等信息，然后提交给云端的服务器，做综合的统计，再反馈给用户。
+
+![](/images/euclid.png)
+![](/images/euclid2.png)
+
+另一个类似的系统是libelium的smart phone detection 系统，地址是：http://www.libelium.com/products/meshlium/smartphone-detection/。这个系统是自己定制了一个盒子，可以完成上述功能，原理类似。应用场景分为两类，一类是商场统计客流，另一类是马路边统计车流。如下图所示。
+
+![](/images/smartphone_detection.png)
+![](/images/smartphone_detection2.png)
+
+
+基本原理
+=========
+
+方案的基本原理是利用工作于manage模式的无线网卡会不断的向周围发出probe request请求的特性，在AP端采用工作于monitor模式的无线网卡来检测周围的wifi通信数据，捕捉到所有的probe request数据包， 并发送到一台核心服务器上，在核心服务器上进行解包，获取到周围所有wifi客户端设备的MAC地址和信号强度，并进行适当的数据处理很分析。
+
+基本方法
+=========
+
+目前利用openWRT开源系统实现了在TP link的wr1041n设备上实现了抓取probe request信息的方法。不过获取到的数据时pcap格式的网卡原始数据，目前可以用wire shark工具对抓到的数据进行简单的分析。可以获取到周围wifi设备的MAC地址和信号强度等信息。
+
+方法步骤
+----------
+
+首先安装12.04稳定版的openwrt，具体过程可参考之前的文档。
+
+在openwrt系统上安装iw和iwcap这两个工具。默认情况下iw工具是已经安装的。iw主要完成对网卡的设置，可以增加虚拟网卡，删除虚拟网卡，调整虚拟网卡的工作模式等。iwcap主要完成对monitor模式下的无线网卡的抓取数据包。可设置成过滤掉某些数据包。
+
+之后用iw工具创建一个处于monitor模式的虚拟网卡,并启动网卡。命令如下：
+
+```bash
+
+  grep -q mon0 /proc/net/dev || /usr/sbin/iw phy phy0 interface add mon0 type monitor
+  /sbin/ifconfig mon0 up
+```
+
+之后即可开始用iwcap工具抓取新建的网卡的数据包了。命令如下：
+
+```bash
+
+  /usr/sbin/iwcap -i mon0 -s > /tmp/wifi.pcap
+```
+
+上述命令并未过滤任何数据包，实际抓取过程中可以过滤掉某些数据包，比如我们若只对802.11的管理数据包感兴趣，就可以过滤掉通信数据包，只抓取管理包。得到的数据保存在wifi.pcap文件内，该文件可以用wireshark工具进行分析。
+
+数据包分析
+-------------
+
+通过上述步骤之后即可得到我们需要的数据文件，用wireshark分析该文件可以得到如下图的数据：
+
+![](/images/wifidata1.png)
+
+上图中是不过滤任何信息后抓取到的数据，可以看到，所有的通信数据包都被抓取到了，有应答包，有广播的beacon包等。我们需要的是probe request包，简单的排序后得到下图：
+
+![](/images/wifidata2.png)
+
+上图中是所有的probe request数据包的一个列表，可以看到该数据包的来源有很多类型的设备。而且同一个设备会不断的广播probe request数据包。
+
+具体每一个probe request包中的数据包内容如下所示：
+
+![](/images/wifidata3.png)
+
+上图中可以看到包中的数据，具体我们关注的是信号强度和来源的MAC地址。
+
+其他方案
+=========
+
+上面的方案是目前找到的在openwrt上可以抓取到数据的方法。另一种可行的方法是用kismet这一工具。kismet工具可以抓取到802.11第二层的数据包，理论上抓取所有的包都是可行的。但是openwrt官方网站上在安装kismet的wiki页面上专门提示说
+在openwrt上kismet不能抓取管理数据包，只能抓数据包。如此，这一方案似乎在openwrt上行不通。或者用其他设备上是可行的。
+
+总结
+=======
+
+采用上述方法基本可以实现获取用户的基本信息的目的，但是只有MAC地址会是精准数据。wifi信号强度受到的干扰因素太多。并且上述方法得到的信号强度是AP设备的天线接收到的wifi设备广播的信号到达天线时的信号强度。这一数值还可能因设备差异而不同。

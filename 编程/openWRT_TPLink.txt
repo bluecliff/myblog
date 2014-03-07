@@ -1,0 +1,59 @@
+Date: 2013-6-20 10:22
+tags: openWRT,Tplink
+title: TP Link路由安装openWRT
+md_linebreaks: two
+
+openWRT支持的TP Link设备
+==========================
+
+目前，官方对TP link系列的设备的支持是比较多的，最全面的WR741N的支持从v1到v8版都有很全面的支持。但目前在国内已经
+难以买到这一型号的v1到v7的设备，各电商网站出售的wr741n路由都是中国版的v8版本，该版本硬件锁水，rom只有2M，不经过硬件改造是不能刷openwrt官网的v8固件的。所以这一系列不再考虑之列。经过慎重比较和实际测试，可以使用的TP设备包括WR1041N和WR703N设备两款，前者国内电商可以购买到v2的设备，这个正是官网支持的型号，其他硬件版本目前不支持。后者WR703N是一款所谓的3G路由，自带USB口，官方固件支持直接插3G上网卡联网，但设备属于便携式设备，只有1个WAN、LAN通用的接口。目前openWRT对WR703N的支持包括v1.2,v1.3,v1.4,v1.6版本，这些版本实际上硬件都是同一版本，只是软件版本不一样。国内电商可以购买到v1.6的版本，测试可用。但据官网信息，v1.6的设备有可能标记了错误的信息，实际是v1.7的设备。购买需谨慎。
+
+
+安装opwnWRT
+=============
+
+TP的AP设备因为都没有加bootloader锁，所以相对于WNR2000v3的设备，安装第三方固件是比较简单的，直接通过web更新固件即可。需要注意的是要下载合适的固件安装。目前对上述两款设备，openwrt在稳定版12.09 attitude\_adjustment中有支持，在trunc版本中也有最新的支持。可直接下载对应版本的.bin文件安装。若是在原厂固件基础上安装，首先按铡U那个*.factory.bin固件，再安装*.sysupdate.bin固件。安装完成后，可通过web登录路由器修改初始密码。也可通过ssh或者telnet登录路由器。
+
+变砖修复
+========
+
+这一款设备的修复比较麻烦，单只要能进入uboot就是可修复的。注意，在刷了squash版的factory时，是不能直接升级jffs版的，否则会变砖。
+
+修复变砖的wr1041N时，首先得拆机，找到四个连载一起的针孔，这既是TTL接线口。板子上因为只有针孔，并未焊接插针，需要自己动手焊接上插针。
+
+TTL的线序是，从画有白色矩形的一端开始，分别是TX,RX,GND,VCC。接TTL线时，TX一般接TTL的RX，RX接TTL的TX，GND接GND。因为板子自主供电，VCC不接。有一些TTL线内部已经对RX，TX进行了转换，所以可以直接TX接TX，RX接RX，这种情况下如果端口没有输出，可交换TX和RX的线序。wr1041N的serial console的波特率是115200，databits 8，stopbit 1,parity和flowcontronl都设为None。
+
+线序接好后，打开console终端软件，插入电源，终端就有输出了，此时迅速按下tpl（在auto boot in 1 second之前）即可进入uboot。
+
+进入uboot之后输入"?"可查看uboot的命令。输入printenv可查看环境变量，从而得到uboot的ip地址和server ip。
+
+把host主机的ip地址设为上一步查到的server ip 地址，默认网关设为上一步查到的uboot的ip地址。
+
+打开主机上的tftp服务器，把要刷入的固件xxx.bin放入tftp根目录。在uboot中依次运行下面的命令：
+
+```bash
+
+  tftpboot 0×80000000 xxx.bin
+  erase 0x9f020000 +0x3c0000
+  cp.b 0×80000000 0x9f020000 0x3c0000
+```
+
+上面的命令执行完毕之后，输入bootm 0x9f020000即可启动新刷入的固件。
+
+命令解释
+---------
+
+tftpboot 0x80000000 xxx.bin是从主机的tftp服务器下载xxx.bin文件到uboot的内存中，内存起始地址为0x80000000。这个地址到底怎么得到的也不清楚，查了很多资料也没找到。
+
+erase 0x9f020000 +0x3c0000是擦除flash上的0x9f020000位置开始的0x3c0000个字节。前一个地址是flash中的image的起始地址。可从uboot的启动信息中得到下面的信息，即可只启动image的启动地址。
+
+```bash
+
+   ## Booting image at 9f020000 ...
+      Uncompressing Kernel Image ... OK
+```
+
+后一个地址是新传入的固件xxx.bin的大小，可以从上一步传送xxx.bin结束时的提示信息中得到。
+
+cp.b 0×80000000 0x9f020000 0x3c0000则完成从内存中向flash中写入新的image，其中第一个地址是内存中image的起始地址，第二个地址是要写入的flash的起始地址，第三个参数是要写入的固件的大小。

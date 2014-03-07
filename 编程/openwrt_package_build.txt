@@ -1,0 +1,92 @@
+Date: 2013-6-30 10:22
+tags: openWRT,编译,开发
+title: 基于openwrt的程序设计
+md_linebreaks: two
+
+内容简介
+=========
+
+本文档主要记录在openwrt系统上开发程序的方法和交叉编译的一些内容。
+
+需要的组件
+===========
+
+在openWRT系统上开发程序，首先需要安装正确版本的openWRT倒一台AP设备上，这样开发出来的程序才能测试和运行。
+其次需要编译出正确的openWRT版本。编译openWRT的具体方法参考之前的文档。在编译得到了正确版本的openwrt之后才可
+进行下一步，否则，因为没有编译得到正确版本的openwrt，后面的步骤编译得到的工具包也是不正确的。
+
+建立开发包
+===========
+
+要开发自己的基于openwrt的软件包，首先需要建立以下几个包。本文档以开发一个简单的tcpserver程序为例介绍。
+
+1. 在编译过的openwrt源代码目录下可以找到package目录，该目录包含所有的opwnWRT官方包。在这里建立自己的开发目录tcpserver。
+
+2. 在上面建立的tcpserver目录下建立src目录和Makefile文件。在src目录小再建立tcpserver.c这样的源文件。
+
+3. 修改Makefile如下所示：
+
+```bash
+
+    #
+    # Copyright (C) 2012 Jo-Philipp Wich <jow@openwrt.org>
+    #
+    # This is free software, licensed under the Apache 2 license.
+    #
+
+    include $(TOPDIR)/rules.mk
+
+    PKG_NAME:=tcpserver
+    PKG_RELEASE:=1
+
+    include $(INCLUDE_DIR)/package.mk
+
+
+    define Package/tcpserver
+      SECTION:=utils
+      CATEGORY:=Utilities
+      TITLE:=Simple tcp server utility
+      MAINTAINER:=li shuangjiang <wafersystem>
+    endef
+
+    define Package/tcpserver/description
+      The tcpserver is simale implementation of a server based on tcp, it can receive package from a connected tcp client.
+    endef
+
+
+    define Build/Prepare
+            $(INSTALL_DIR) $(PKG_BUILD_DIR)
+            $(CP) ./src/* $(PKG_BUILD_DIR)/
+    endef
+
+    define Build/Configure
+    endef
+
+    define Build/Compile
+            $(TARGET_CC) $(TARGET_CFLAGS) \
+                    -o $(PKG_BUILD_DIR)/tcpserver $(PKG_BUILD_DIR)/tcpserver.c
+    endef
+```
+
+上面的Makefile只需稍作修改，即可应用于其他文件，主要是定义了包的类型为utilities,以及包的描述信息，安装目录，编译目录等信息，照此修改即可。
+
+4. 修改tcpserver.c源文件，把程序写入该文件即可。和一般的linux程序开发没有区别。
+
+编译
+=====
+
+程序写好后，就需要编译，编译前需要先配置。
+
+1. 首先运行make menuconfig打开openwrt自带的图形化配置程序。根据上一步makefile文件中定义的软件的类型utils，在配置工具中选中并打开utilities选项，该选项中有对应的tcpserver选项，选中为M，即编译但不预安装入openWRT系统。
+
+2. 完成上述配置后运行命令：
+
+```bash
+  
+  make package/tcpserver/compile V=s
+```
+
+这个命令即可完成tcpserver软件包的交叉编译，V=s选项可输出编译信息。若无错误，编译后的可执行程序在bin/ar71xx/package目录下。形式一般如tcpserver_1_ar71xx.ipk。1是版本号，ar71xx是目标平台。
+
+完成编译后即可把目标程序用scp传到openwrt系统内，安装，运行。
+

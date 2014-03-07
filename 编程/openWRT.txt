@@ -1,0 +1,84 @@
+Date: 2013-5-26 13:22
+tags: openWRT
+title: WNR2000v3安装openWRT
+md_linebreaks: two
+
+目前在openWRT的官方网站上对WNR2000v3的支持是在 Work In Progress 列表中的，即该系列的支持是不全面的，尚处于
+测试开发阶段。所以WNR2000v3目前只能刷chunk版的非稳定版的openWRT。
+
+WNR2000V3的可刷入openWRT固件版本为ar71xx,下载地址为：http://downloads.openwrt.org/snapshots/trunk/ar71xx/
+该目录下有编译过的WNR2000V3版本的openWRT镜像。下载后即可安装。
+
+
+telnet解锁
+===========
+
+有两种安装方法，
+1. 安装到RAM，可做测试，采用tftp形式安装，不会影响原有的厂商固件。断电后恢复。
+2. 安装到ROM，需要破解厂商的bootloader，安装时需要手工焊接串口线，安装后永远有效。
+
+无论是RAM安装还是ROM安装，都需要先解锁netgare的OEM固件的telnet console，以实现telnet登录路由器。解锁过程
+可参考：http://wiki.openwrt.org/toh/netgear/telnet.console。具体的windows平台的解锁以及设置路由器信息的过程如下：
+
+1. 下载telnetenable.exe程序
+2. 连接计算机和路由器WNR2000V3的lan口，通过ping命令来检查与NETGEAR WGR61设备的连通性
+3. 通过ping 获得路由器MAC地址，通过arp -a参数查看当前系统获得的MAC信息，得到192.168.1.1对应的MAC
+4. 执行“telnetenable.exe 设备IP地址 设备MAC地址 Gearguy Geardog”即可开启设备的telnet功能。，例：“telnetEnable.exe 192.168.1.1 204E7F961978 Gearguy Geardog”
+5. 开启成功不会有任何信息返回，直接输入telnet 192.168.1.1来通过网络远程telnet 设备。
+6. 接下来就会看到出现LOGIN的提示信息“U12H02900> ”，输入用户名为Gearguy，密码为Geardog就可成功登录到管理界面中，之后可以通过help或者"?"命令来查看帮助信息，命令包括bridge（网桥命令），ddns（动态域名解析命令），ip（设置IP信息），lan（设置局域网参数），nat（设置NAT信息），passwd（修改帐户密码），reboot（重新启动路由器），save（保存设置），show（查看设置信息）等
+7. telnet连接上后我们输入web命令后回车进入WEB页面参数设置接口。
+8. 在WEB页面参数设置接口中我们只有两个命令可以选择，一个是passwd，一个是username。通过username选择帐户名，passwd修改该帐户对应的密码。
+9. 最后通过save命令保存修改的设置。
+10. exit退出telnet后我们就可以通过IE浏览器访问设备的管理地址192.168.1.1并通过帐户以及密码登录。
+
+openWRT RAM镜像安装：
+=====================
+
+WNR2000官方的bootloader: uboot具有CRC校验功能，在执行bootcmd命令之前会校验flash，如此会阻止直接从flash
+运行openWRT，如果不想替换掉OEM版的bootloader，可以创建openWRT的ram镜像并且通过tftp加载该镜像，使WNR2000运
+行openWRT。这样的安装方式需要串口终端。
+
+下面的安装过程是适用用WNR2000v1的安装方法，v3未做测试。
+
+1. 首先配置主机的网络为静态IP地址192.168.1.12,并且安装tftp server。
+2. 复制openwrt-ar71xx-uImage-initramfs-lzma.bin到tftp server的目录下(如/tftpboot)。
+3. 进入WNR2000v1的serial console，在出现Hit any key to stop autoboot：后按任后阻止自动启动。
+4. 在serial console中执行 tftpboot 0x81000000 openwrt-ar71xx-uImage-initramfs-lzma.bin，将会打印出一些# 
+5. 在serial console中执行 setenv bootargs board=WNR2000
+6. 在serial console中执行 bootm ，该命令启动内核。
+
+openWRT ROM安装方法：
+=====================
+
+- 解锁telnet，可以telnet登录到路由器。    
+- (这一步不是必须的，但建议执行)备份uboot(WNR2000的官方bootloader)和flash   partitions。用ftpd工具备份示例：
+
+  ```bash      
+  dd if=/dev/mtdblock0 of=/tmp/u-boot.orig.bin
+  dd if=/dev/mtdblock7 of=/tmp/ART.orig.bin
+  ftpput --user=<username> --password=<password> --verbose 192.168.1.2 . u-boot.orig.bin
+  ftpput --user=<username> --password=<password> --verbose 192.168.1.2 . ART.orig.bin
+  ```
+   
+- 下载WNR2000v3镜像文件http://downloads.openwrt.org/snapshots/trunk/ar71xx/
+- cd /tmp 
+
+  ```bash
+  snarf http://fuhry.co.cc/b/wnr2000/ubootenv-stockpartitions.img
+  snarf http://fuhry.co.cc/b/wnr2000/u-boot.bin
+  snarf http://downloads.openwrt.org/backfire/10.03.1/ar71xx/openwrt-ar71xx-ap81-rootfs-squashfs.bin
+  snarf http://downloads.openwrt.org/backfire/10.03.1/ar71xx/openwrt-ar71xx-uImage-lzma.bin
+  mtd -e mtd0 write u-boot.bin mtd0
+  mtd -e mtd1 write ubootenv-stockpartitions.img mtd1
+  mtd -e mtd2 write openwrt-ar71xx-ap81-rootfs-squashfs.bin mtd2
+  mtd -e mtd4 write openwrt-ar71xx-uImage-lzma.bin mtd4
+  reboot
+  ```
+
+遵照以上步骤可以把openWRT刷入ROM中，实际上也不一定一定要用snarf命令从网络下载，实际可以把相应的文件先下载到
+主机上，再用tftp命令从主机传送到AP的tmp目录中。
+
+openWRT刷机总结
+================
+
+目前阶段还未用上述方法成功刷入openWRT到WNR2000v3中，尚需进一步实验。

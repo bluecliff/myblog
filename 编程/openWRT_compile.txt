@@ -1,0 +1,71 @@
+Date: 2013-6-22 15:00
+tags: openWRT,编译
+title: 编译openWRT
+md_linebreaks: two
+
+搭建编译环境
+===============
+
+编译环境如下：
+
+- ubuntu 12.10 32位 桌面版
+- gcc g++ binutils patch bzip2 flex bison make autoconf gettext texinfo unzip sharutils subversion libncurses5-dev ncurses-term zlib1g-dev
+- 较快的网络
+
+使用ubuntu的默认包管理工具更新或安装编译工具和依赖库：
+
+
+```bash
+    sudo apt-get update
+    sudo apt-get install gcc g++ binutils patch bzip2 flex bison make autoconf gettext texinfo unzip sharutils subversion libncurses5-dev ncurses-term zlib1g-dev
+```
+
+获取源代码
+===========
+
+opweWRT的源代码可以从openWRT官网的代码库里直接用SVN下载。我们只需要trunc版和12.09稳定版，其他版本可参考https://dev.openwrt.org/wiki/GetSource。
+
+Development branch:
+
+- svn co svn://svn.openwrt.org/openwrt/trunk/
+
+Attitude Adjustment 12.09 branch: ​ChangeLog
+
+- svn co svn://svn.openwrt.org/openwrt/branches/attitude_adjustment
+
+源代码下载时间比较长，需耐心等待。
+
+编译
+=====
+
+1. 首先更新代码，在代码库中用svn up命令可更新代码到最新版本。
+2. 安装库，运行脚本 ./scripts/feeds update -a  ./scripts/feeds/install -a
+3. 配置编译项，运行make menuconfig命令，选择编译目标平台等信息，这里选择ar71xx平台。保存后退出。
+4. 运行 make package/symlinks 更新库
+5. 编译，运行make命令，也可运行make V=99，编译过程会输出信息。
+
+首次编译时间比很长，编译过程中会从网络下载大量文件，必须保持稳定在线。
+
+编译完成后，如没有错误，在/bin/ar71xx目录下可以找到对应平台的.bin文件，即为安装的版本。
+
+如果编译出错，可运行 make package/symlinks 后再编译。
+
+只清除某个模块
+
+```bash
+    
+    make package/qos/clean
+```
+
+只编译某个模块
+
+```bash
+
+    make package/qos/clean
+    make package/qos/compile
+    make package/qos/install
+```
+总结
+======
+
+上述编译方法是最简单的编译方法，会给ar71xx平台所有支持的设备编译出目标文件，实际上只需要编译出我们需要的wr1041n和wr703n平台即可，但目前还未掌握配置方法。
