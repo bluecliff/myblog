@@ -57,6 +57,7 @@ def get_child(node,tree):
 data=[(1,2),(3,1)]
 tree = init_tree(data)
 print root(tree),get_child(tree[1],tree),get_data(tree[2])
+```
 
 上面的是我下来改后的代码，和现场写的差不多。
 
