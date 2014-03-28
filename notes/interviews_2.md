@@ -49,6 +49,7 @@ double compute_pi()
 
 ```c
 
+//给出一个字符串str，假设是（ABC）；给出一个文档Doc（DEACFBAEEE……）；写在文档Doc中找出包含str所有字符的最短片段（不要求顺序）。上面这种情况的最短片段就是（ACFB）。
 #include <iostream>
 #include <string.h>
 using namespace std;
