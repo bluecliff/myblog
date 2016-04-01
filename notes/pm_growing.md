@@ -1,4 +1,7 @@
-# 产品经理修习
+title: 产品经理修习
+Date: 2015-4-2 20:17
+Tags: 学习
+md_linebreaks:two
 
 ## 可以阅读的书
 
